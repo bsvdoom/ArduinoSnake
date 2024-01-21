@@ -212,22 +212,32 @@ unsigned long last_update = 0;
 void handle_input() {
   int buttons = read_LCD_buttons();
 
-// btnRIGHT
-  if(buttons == btnLEFT ) {
-    curr_direction = RIGHT;
+
+  if(buttons == btnLEFT ) { // btnRIGHT
+    if(curr_direction != LEFT ) {
+      curr_direction = RIGHT;
+    }
     Serial.println("RIGHT");
   }
 
-  if(buttons == btnSELECT ) {
-    curr_direction = LEFT;
+  if(buttons == btnSELECT ) { // btnLEFT
+    if(curr_direction != RIGHT ) {
+      curr_direction = LEFT;
+    }
     Serial.println("LEFT");
   }
+
   if(buttons == btnUP ) {
-    curr_direction = UP;
+     if(curr_direction != DOWN ) {
+      curr_direction = UP;
+    }
     Serial.println("UP");
   }
+  
   if(buttons == btnDOWN ) {
-    curr_direction = DOWN;
+     if(curr_direction != UP ) {
+      curr_direction = DOWN;
+    }
     Serial.println("DOWN");
   }
 
@@ -236,7 +246,7 @@ void handle_input() {
 
 void loop() {
 
-  update_input();
+  handle_input();
 
   unsigned long time = millis();
   unsigned long elapsed = time - last_update;
