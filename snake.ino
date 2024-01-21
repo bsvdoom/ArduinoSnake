@@ -7,10 +7,19 @@
 #define BOARD_WIDTH (SECTORS_PER_ROW * SECTOR_WIDTH)
 #define BOARD_HEIGHT (SECTORS_PER_COLUMN * SECTOR_HEIGHT)
 
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
-const int left_button = 6;
-const int right_button = 7;
+int lcd_key     = 0;
+int adc_key_in  = 0;
+
+#define btnNONE   0
+#define btnRIGHT  1
+#define btnUP     2
+#define btnDOWN   3
+#define btnLEFT   4
+#define btnSELECT 5
+#define NUM_KEYS 6
+
 
 const short MIN_DRAW_WAIT = 60;
 
@@ -152,13 +161,29 @@ void draw_snake() {
   }
 }
 
+
+int read_LCD_buttons() {
+  adc_key_in = analogRead(0);
+  
+  if(adc_key_in < 1000) {
+    Serial.println(adc_key_in);
+  }
+  
+  if (adc_key_in > 1000) return btnNONE; 
+  if (adc_key_in < 50)   return btnRIGHT;  
+  if (adc_key_in < 195)  return btnUP; 
+  if (adc_key_in < 380)  return btnDOWN; 
+  if (adc_key_in < 555)  return btnLEFT; 
+  if (adc_key_in < 790)  return btnSELECT;  
+
+  return btnNONE;  // when all others fail, return this...
+}
+
 void setup() {
-  pinMode(left_button, INPUT);
-  pinMode(right_button, INPUT);
-  randomSeed(analogRead(0));
   byte character[SECTOR_HEIGHT];
   lcd.begin(16, 2);
   Serial.begin(9600);
+  Serial.println("starting snek!");
   snake_head = (struct snake_node_t*) malloc(sizeof(struct snake_node_t));
   snake_head->pos.x = 5;
   snake_head->pos.y = 5;
@@ -184,37 +209,34 @@ short time_since_last_draw = 0;
 unsigned long last_update = 0;
 
 
-void update_input() {
-  bool new_left_button_state = (bool)digitalRead(left_button);
-  bool new_right_button_state = (bool)digitalRead(right_button);
-
-  left_just_pressed = new_left_button_state && !left_button_state;
-  right_just_pressed = new_right_button_state && !right_button_state;
-
-  left_button_state = new_left_button_state;
-  right_button_state = new_right_button_state;
-}
-
 void handle_input() {
-  if(left_just_pressed) {
-    if(curr_direction == LEFT) {
-      curr_direction = UP;
-    } else {
-      curr_direction = curr_direction >> 1;
-    }
-  } else if (right_just_pressed) {
-    if(curr_direction == UP) {
-      curr_direction = LEFT;
-    } else {
-      curr_direction = curr_direction << 1;
-    }
+  int buttons = read_LCD_buttons();
+
+// btnRIGHT
+  if(buttons == btnLEFT ) {
+    curr_direction = RIGHT;
+    Serial.println("RIGHT");
   }
+
+  if(buttons == btnSELECT ) {
+    curr_direction = LEFT;
+    Serial.println("LEFT");
+  }
+  if(buttons == btnUP ) {
+    curr_direction = UP;
+    Serial.println("UP");
+  }
+  if(buttons == btnDOWN ) {
+    curr_direction = DOWN;
+    Serial.println("DOWN");
+  }
+
 }
+
 
 void loop() {
 
   update_input();
-  handle_input();
 
   unsigned long time = millis();
   unsigned long elapsed = time - last_update;
